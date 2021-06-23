@@ -470,6 +470,76 @@ func TestGreaterThanFilter(t *testing.T) {
 	}
 }
 
+func TestFilterHttpStatus(t *testing.T) {
+	var pass bool
+	var filter = Filter{}
+	dec := json.NewDecoder(bytes.NewBuffer([]byte(`{"template":"{{ $headers := dict \"Authorization\" (env \"AUTHX_TOKEN\") }}{{ (http \"GET\" (print \"https://bouncer.tcg.live/lists/ip_address_blacklist/items/\" .ip_address) $headers).StatusCode }}","operator":"eq","value":"200"}`)))
+	dec.UseNumber()
+	err := dec.Decode(&filter)
+	if err != nil {
+		t.Error("Failed to parse filter", err)
+		return
+	}
+	var msg1 interface{}
+	msg1, err = decodeJSONMessage([]byte(`{"ip_address":"92.249.32.11"}`))
+	if err != nil {
+		t.Error("Failed to parse message 1", err)
+		return
+	}
+	pass, err = filter.Test(msg1)
+	if err != nil {
+		t.Error("Filter test failed", err)
+		return
+	}
+	if !pass {
+		t.Error("92.249.32.11 should pass")
+		return
+	}
+}
+
+func TestFilterHttpStatusWithCache(t *testing.T) {
+	// t.SkipNow()
+	var pass bool
+	var filter = Filter{}
+	dec := json.NewDecoder(bytes.NewBuffer([]byte(`{"template":"{{ $cachedVal := (cacheGet (print \"ip_address_blacklist:\" .ip_address)) }}{{ if $cachedVal }}{{ print $cachedVal }}{{ else }}{{ $headers := dict \"Authorization\" (env \"AUTHX_TOKEN\") }}{{ $res := ((http \"GET\" (print \"https://bouncer.tcg.live/lists/ip_address_blacklist/items/\" .ip_address) $headers).StatusCode) }}{{ cacheSet (print \"ip_address_blacklist:\" .ip_address) $res \"10m\" }}{{ end }}","operator":"eq","value":"200"}`)))
+	dec.UseNumber()
+	err := dec.Decode(&filter)
+	if err != nil {
+		t.Error("Failed to parse filter", err)
+		return
+	}
+	var msg1 interface{}
+	msg1, err = decodeJSONMessage([]byte(`{"ip_address":"92.249.32.11"}`))
+	if err != nil {
+		t.Error("Failed to parse message 1", err)
+		return
+	}
+	pass, err = filter.Test(msg1)
+	if err != nil {
+		t.Error("Filter test failed", err)
+		return
+	}
+	if !pass {
+		t.Error("92.249.32.11 should pass")
+		return
+	}
+	var msg2 interface{}
+	msg2, err = decodeJSONMessage([]byte(`{"ip_address":"92.249.32.11"}`))
+	if err != nil {
+		t.Error("Failed to parse message 2", err)
+		return
+	}
+	pass, err = filter.Test(msg2)
+	if err != nil {
+		t.Error("Filter test failed", err)
+		return
+	}
+	if !pass {
+		t.Error("92.249.32.11 should pass again")
+		return
+	}
+}
+
 func decodeJSONMessage(data []byte) (interface{}, error) {
 	var jsonData interface{}
 	var msgReader = bytes.NewBuffer(data)
