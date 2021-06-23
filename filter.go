@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"reflect"
+	"strconv"
 	"time"
 
 	"github.com/nickcarenza/go-template"
@@ -149,5 +150,28 @@ func (f *Filter) Test(msg interface{}) (bool, error) {
 		}
 	default:
 		return f.Value == val, nil
+	}
+}
+
+func interfaceToFloat64(val interface{}) (float64, error) {
+	switch v := val.(type) {
+	case float64:
+		return v, nil
+	case int:
+		return float64(v), nil
+	case string:
+		f, err := strconv.ParseFloat(v, 64)
+		if err != nil {
+			return 0, err
+		}
+		return f, nil
+	case json.Number:
+		f, err := v.Float64()
+		if err != nil {
+			return 0, err
+		}
+		return f, nil
+	default:
+		return 0, fmt.Errorf("TypeAssertionError")
 	}
 }
