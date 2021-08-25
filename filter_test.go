@@ -540,6 +540,86 @@ func TestFilterHttpStatusWithCache(t *testing.T) {
 	}
 }
 
+func TestFilterRegexMatch(t *testing.T) {
+	var filter = Filter{}
+	err := json.Unmarshal([]byte(`{"path":"$.value","operator":"regex match","value":".*x{4}.*"}`), &filter)
+	if err != nil {
+		t.Error("Failed to parse filter", err)
+		return
+	}
+	var msg1 interface{}
+	msg1, err = decodeJSONMessage([]byte(strings.Join([]string{`{"value":"-xxxx"}`}, "")))
+	if err != nil {
+		t.Error("Failed to parse message 1", err)
+		return
+	}
+	var pass bool
+	pass, err = filter.Test(msg1)
+	if err != nil {
+		t.Error("Filter test failed", err)
+		return
+	}
+	if !pass {
+		t.Error("-xxxx should pass")
+		return
+	}
+	var msg2 interface{}
+	msg2, err = decodeJSONMessage([]byte(strings.Join([]string{`{"value":"-xxx-"}`}, "")))
+	if err != nil {
+		t.Error("Failed to parse message 2", err)
+		return
+	}
+	pass, err = filter.Test(msg2)
+	if err != nil {
+		t.Error("Filter test failed", err)
+		return
+	}
+	if pass {
+		t.Error("-xxx- should not pass")
+		return
+	}
+}
+
+func TestFilterRegexNoMatch(t *testing.T) {
+	var filter = Filter{}
+	err := json.Unmarshal([]byte(`{"path":"$.value","operator":"regex no match","value":".*x{4}.*"}`), &filter)
+	if err != nil {
+		t.Error("Failed to parse filter", err)
+		return
+	}
+	var msg1 interface{}
+	msg1, err = decodeJSONMessage([]byte(strings.Join([]string{`{"value":"-xxxx"}`}, "")))
+	if err != nil {
+		t.Error("Failed to parse message 1", err)
+		return
+	}
+	var pass bool
+	pass, err = filter.Test(msg1)
+	if err != nil {
+		t.Error("Filter test failed", err)
+		return
+	}
+	if pass {
+		t.Error("-xxxx should not pass")
+		return
+	}
+	var msg2 interface{}
+	msg2, err = decodeJSONMessage([]byte(strings.Join([]string{`{"value":"-xxx-"}`}, "")))
+	if err != nil {
+		t.Error("Failed to parse message 2", err)
+		return
+	}
+	pass, err = filter.Test(msg2)
+	if err != nil {
+		t.Error("Filter test failed", err)
+		return
+	}
+	if !pass {
+		t.Error("-xxx- should pass")
+		return
+	}
+}
+
 func decodeJSONMessage(data []byte) (interface{}, error) {
 	var jsonData interface{}
 	var msgReader = bytes.NewBuffer(data)

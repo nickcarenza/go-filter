@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"reflect"
+	"regexp"
 	"strconv"
 	"time"
 
@@ -114,7 +115,8 @@ func (f *Filter) Test(msg interface{}) (bool, error) {
 		default:
 			return false, fmt.Errorf("Impossible condition")
 		}
-	case "olderThan", "newerThan":
+	case "olderThan", "older than", "older",
+		"newerThan", "newer than", "newer":
 		var fVal string
 		var ok bool
 		var err error
@@ -141,10 +143,37 @@ func (f *Filter) Test(msg interface{}) (bool, error) {
 			return false, err
 		}
 		switch f.Operator {
-		case "olderThan":
+		case "olderThan", "older than", "older":
 			return time.Since(tVal) > time.Duration(dVal), nil
-		case "newerThan":
+		case "newerThan", "newer than", "newer":
 			return time.Since(tVal) < time.Duration(dVal), nil
+		default:
+			return false, fmt.Errorf("Impossible condition")
+		}
+	case "regexMatch", "regex match",
+		"regexNoMatch", "regex no match":
+		var re *regexp.Regexp
+		var err error
+		var fVal string
+		var tStr string
+		var ok bool
+		fVal, ok = f.Value.(string)
+		if !ok {
+			return false, fmt.Errorf("TypeAssertionError")
+		}
+		re, err = regexp.Compile(fVal)
+		if err != nil {
+			return false, err
+		}
+		tStr, ok = val.(string)
+		if !ok {
+			return false, fmt.Errorf("TypeAssertionError")
+		}
+		switch f.Operator {
+		case "regexMatch", "regex match":
+			return re.MatchString(tStr), nil
+		case "regexNoMatch", "regex no match":
+			return !re.MatchString(tStr), nil
 		default:
 			return false, fmt.Errorf("Impossible condition")
 		}
