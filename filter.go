@@ -27,6 +27,7 @@ type Filter struct {
 func (f *Filter) Test(msg interface{}) (bool, error) {
 	var val interface{}
 	var err error
+	var fVal interface{}
 	if f.Template != nil {
 		var b bytes.Buffer
 		err = f.Template.Execute(&b, msg)
@@ -48,22 +49,28 @@ func (f *Filter) Test(msg interface{}) (bool, error) {
 		val = float64(n)
 	}
 	if n, ok := f.Value.(json.Number); ok {
-		var err error
-		f.Value, err = n.Float64()
+		fVal, err = n.Float64()
 		if err != nil {
 			return false, fmt.Errorf("TypeAssertionError")
 		}
+	} else if str, ok := f.Value.(string); ok {
+		fVal, err = template.Interpolate(msg, str)
+		if err != nil {
+			return false, err
+		}
+	} else {
+		fVal = f.Value
 	}
 	switch f.Operator {
 	case "!=", "<>", "ne", "doesn't equal", "not equal to":
-		return f.Value != val, nil
+		return fVal != val, nil
 	case "==", "eq", "equal", "equals":
-		return f.Value == val, nil
+		return fVal == val, nil
 	case "in", "not in":
-		rt := reflect.TypeOf(f.Value)
+		rt := reflect.TypeOf(fVal)
 		switch rt.Kind() {
 		case reflect.Slice:
-			s := f.Value.([]interface{})
+			s := fVal.([]interface{})
 			for _, v := range s {
 				f2 := Filter{
 					Path:     f.Path,
@@ -95,7 +102,7 @@ func (f *Filter) Test(msg interface{}) (bool, error) {
 		if val == nil {
 			return false, nil
 		}
-		fNum, err = interfaceToFloat64(f.Value)
+		fNum, err = interfaceToFloat64(fVal)
 		if err != nil {
 			return false, err
 		}
@@ -117,7 +124,7 @@ func (f *Filter) Test(msg interface{}) (bool, error) {
 		}
 	case "olderThan", "older than", "older",
 		"newerThan", "newer than", "newer":
-		var fVal string
+		var rVal string
 		var ok bool
 		var err error
 		var dVal timeutils.ApproxBigDuration
@@ -126,11 +133,11 @@ func (f *Filter) Test(msg interface{}) (bool, error) {
 		if val == nil {
 			return false, nil
 		}
-		fVal, ok = f.Value.(string)
+		rVal, ok = fVal.(string)
 		if !ok {
 			return false, fmt.Errorf("TypeAssertionError")
 		}
-		dVal, err = timeutils.ParseApproxBigDuration([]byte(fVal))
+		dVal, err = timeutils.ParseApproxBigDuration([]byte(rVal))
 		if err != nil {
 			return false, err
 		}
@@ -154,14 +161,14 @@ func (f *Filter) Test(msg interface{}) (bool, error) {
 		"regexNoMatch", "regex no match":
 		var re *regexp.Regexp
 		var err error
-		var fVal string
+		var rVal string
 		var tStr string
 		var ok bool
-		fVal, ok = f.Value.(string)
+		rVal, ok = fVal.(string)
 		if !ok {
 			return false, fmt.Errorf("TypeAssertionError")
 		}
-		re, err = regexp.Compile(fVal)
+		re, err = regexp.Compile(rVal)
 		if err != nil {
 			return false, err
 		}
@@ -178,7 +185,7 @@ func (f *Filter) Test(msg interface{}) (bool, error) {
 			return false, fmt.Errorf("Impossible condition")
 		}
 	default:
-		return f.Value == val, nil
+		return fVal == val, nil
 	}
 }
 

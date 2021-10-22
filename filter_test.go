@@ -471,6 +471,7 @@ func TestGreaterThanFilter(t *testing.T) {
 }
 
 func TestFilterHttpStatus(t *testing.T) {
+	t.SkipNow()
 	var pass bool
 	var filter = Filter{}
 	dec := json.NewDecoder(bytes.NewBuffer([]byte(`{"template":"{{ $headers := dict \"Authorization\" (env \"AUTHX_TOKEN\") }}{{ (http \"GET\" (print \"https://bouncer.tcg.live/lists/ip_address_blacklist/items/\" .ip_address) $headers).StatusCode }}","operator":"eq","value":"200"}`)))
@@ -498,7 +499,7 @@ func TestFilterHttpStatus(t *testing.T) {
 }
 
 func TestFilterHttpStatusWithCache(t *testing.T) {
-	// t.SkipNow()
+	t.SkipNow()
 	var pass bool
 	var filter = Filter{}
 	dec := json.NewDecoder(bytes.NewBuffer([]byte(`{"template":"{{ $cachedVal := (cacheGet (print \"ip_address_blacklist:\" .ip_address)) }}{{ if $cachedVal }}{{ print $cachedVal }}{{ else }}{{ $headers := dict \"Authorization\" (env \"AUTHX_TOKEN\") }}{{ $res := ((http \"GET\" (print \"https://bouncer.tcg.live/lists/ip_address_blacklist/items/\" .ip_address) $headers).StatusCode) }}{{ cacheSet (print \"ip_address_blacklist:\" .ip_address) $res \"10m\" }}{{ end }}","operator":"eq","value":"200"}`)))
@@ -627,4 +628,59 @@ func decodeJSONMessage(data []byte) (interface{}, error) {
 	msgDecoder.UseNumber()
 	var decodeErr = msgDecoder.Decode(&jsonData)
 	return jsonData, decodeErr
+}
+
+func TestValueAsTemplate(t *testing.T) {
+	var filter = Filter{}
+	err := json.Unmarshal([]byte(`{"template":"{{.key}}","value":"{{.key}}"}`), &filter)
+	if err != nil {
+		t.Error("Failed to parse filter", err)
+		return
+	}
+	var msg1 interface{}
+	msg1, err = decodeJSONMessage([]byte(`{"key":null}`))
+	if err != nil {
+		t.Error("Failed to parse message 1", err)
+		return
+	}
+	var pass bool
+	pass, err = filter.Test(msg1)
+	if err != nil {
+		t.Error("Filter test failed", err)
+		return
+	}
+	if !pass {
+		t.Error("null should pass")
+		return
+	}
+	var msg2 interface{}
+	msg2, err = decodeJSONMessage([]byte(`{"key":"test"}`))
+	if err != nil {
+		t.Error("Failed to parse message 2", err)
+		return
+	}
+	pass, err = filter.Test(msg2)
+	if err != nil {
+		t.Error("Filter test failed", err)
+		return
+	}
+	if !pass {
+		t.Error("string value should pass")
+		return
+	}
+	var msg3 interface{}
+	msg3, err = decodeJSONMessage([]byte(`{}`))
+	if err != nil {
+		t.Error("Failed to parse message 3", err)
+		return
+	}
+	pass, err = filter.Test(msg3)
+	if err != nil {
+		t.Error("Filter test failed", err)
+		return
+	}
+	if !pass {
+		t.Error("missing key should pass")
+		return
+	}
 }
