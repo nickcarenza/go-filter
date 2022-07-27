@@ -21,10 +21,32 @@ type Filter struct {
 	Value    interface{}        `json:"value"`
 	Operator string             `json:"operator"`
 	Requeue  bool               `json:"requeue"`
+	Or       *Filter            `json:"or"`
+	And      *Filter            `json:"and"`
 }
 
-// Test ...
+// Test evaluates if the filter or the Or clause passes
 func (f *Filter) Test(msg interface{}) (bool, error) {
+	pass, err := Test(f, msg)
+	if err != nil {
+		return false, err
+	}
+	if !pass && f.Or != nil {
+		pass, err = f.Or.Test(msg)
+		if err != nil {
+			return false, err
+		}
+	}
+	if pass && f.And != nil {
+		pass, err = f.And.Test(msg)
+		if err != nil {
+			return false, err
+		}
+	}
+	return pass, err
+}
+
+func Test(f *Filter, msg interface{}) (bool, error) {
 	var val interface{}
 	var err error
 	var fVal interface{}
@@ -188,6 +210,10 @@ func (f *Filter) Test(msg interface{}) (bool, error) {
 		return fVal == val, nil
 	}
 }
+
+// func AndOr(bool, and *Filter, or *Filter) (bool, error) {
+
+// }
 
 func interfaceToFloat64(val interface{}) (float64, error) {
 	switch v := val.(type) {
