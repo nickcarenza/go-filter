@@ -40,8 +40,8 @@ github.com/stretchr/testify v1.7.0 h1:nwc3DEeHmmLAfoZucVR881uASk0Mfjw8xYJ99tb5Cc
 github.com/stretchr/testify v1.7.0/go.mod h1:6Fq8oRcR53rry900zMqJjRRixrwX3KX962/h/Wwjteg=
 github.com/the-control-group/go-currency v1.0.0 h1:sY1hQUlNTtKbZiLiF6SXKFXrqo7FDGN3jm2gnvFJBZU=
 github.com/the-control-group/go-currency v1.0.0/go.mod h1:gNGwhSuecuYDUnAfBmmlEq1FLtywtGTsw/W1HhBX9HE=
-github.com/the-control-group/go-jsonpath v1.1.0 h1:xkSWMLea1nCdhJSWoXmTXXiI5q6LZNaKGqsX3vcHpQc=
-github.com/the-control-group/go-jsonpath v1.1.0/go.mod h1:qp1ba5G/1RkH2gTXHwBlyhz5iS+d2zuGFTky9yi2esE=
+github.com/the-control-group/go-jsonpath v1.1.1 h1:CqMfl348DM9P9IVT/+QKKPuAynyMZhCV1boi5WJKK+4=
+github.com/the-control-group/go-jsonpath v1.1.1/go.mod h1:qp1ba5G/1RkH2gTXHwBlyhz5iS+d2zuGFTky9yi2esE=
 github.com/the-control-group/go-timeutils v1.0.3/go.mod h1:gFTtZjXy9fAXaxIadXCklgZVTTclwLVWOZfbErh5Kf8=
 github.com/the-control-group/go-timeutils v1.0.4 h1:cB+hgNHikdUEN/mPj6ehpVop7E8+BUizIJ+FnAh5COA=
 github.com/the-control-group/go-timeutils v1.0.4/go.mod h1:gFTtZjXy9fAXaxIadXCklgZVTTclwLVWOZfbErh5Kf8=
