@@ -3,7 +3,7 @@ module github.com/nickcarenza/go-filter
 go 1.18
 
 require (
-	github.com/nickcarenza/go-template v1.10.0
+	github.com/nickcarenza/go-template v1.11.0
 	github.com/the-control-group/go-jsonpath v1.1.1
 	github.com/the-control-group/go-timeutils v1.0.4
 )
@@ -19,6 +19,7 @@ require (
 	github.com/imdario/mergo v0.3.13 // indirect
 	github.com/mitchellh/copystructure v1.2.0 // indirect
 	github.com/mitchellh/reflectwalk v1.0.2 // indirect
+	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/shopspring/decimal v1.3.1 // indirect
 	github.com/the-control-group/go-currency v1.0.0 // indirect
 	github.com/the-control-group/go-ttlcache v1.0.0 // indirect
