@@ -3,7 +3,7 @@ module github.com/nickcarenza/go-filter
 go 1.18
 
 require (
-	github.com/nickcarenza/go-template v1.9.0
+	github.com/nickcarenza/go-template v1.10.0
 	github.com/the-control-group/go-jsonpath v1.1.1
 	github.com/the-control-group/go-timeutils v1.0.4
 )

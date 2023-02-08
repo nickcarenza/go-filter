@@ -142,7 +142,7 @@ func Test(f *Filter, msg interface{}) (bool, error) {
 		case "<=", "le", "lte", "less than or equal to":
 			return vNum <= fNum, nil
 		default:
-			return false, fmt.Errorf("Impossible condition")
+			return false, fmt.Errorf("impossible condition")
 		}
 	case "olderThan", "older than", "older",
 		"newerThan", "newer than", "newer":
@@ -177,7 +177,7 @@ func Test(f *Filter, msg interface{}) (bool, error) {
 		case "newerThan", "newer than", "newer":
 			return time.Since(tVal) < time.Duration(dVal), nil
 		default:
-			return false, fmt.Errorf("Impossible condition")
+			return false, fmt.Errorf("impossible condition")
 		}
 	case "regexMatch", "regex match",
 		"regexNoMatch", "regex no match":
@@ -204,7 +204,7 @@ func Test(f *Filter, msg interface{}) (bool, error) {
 		case "regexNoMatch", "regex no match":
 			return !re.MatchString(tStr), nil
 		default:
-			return false, fmt.Errorf("Impossible condition")
+			return false, fmt.Errorf("impossible condition")
 		}
 	default:
 		return fVal == val, nil

@@ -3,6 +3,7 @@ package filter
 import (
 	"bytes"
 	"encoding/json"
+	"math/rand"
 	"strings"
 	"testing"
 	"time"
@@ -682,5 +683,87 @@ func TestValueAsTemplate(t *testing.T) {
 	if !pass {
 		t.Error("missing key should pass")
 		return
+	}
+}
+
+func TestRandomBoolean(t *testing.T) {
+	var filter = Filter{}
+	err := json.Unmarshal([]byte(`{"template":"{{ randomInt 0 1 }}","value":"0"}`), &filter)
+	if err != nil {
+		t.Error("Failed to parse filter", err)
+		return
+	}
+	var msg interface{}
+	msg, err = decodeJSONMessage([]byte(`{}`))
+	if err != nil {
+		t.Error("Failed to parse message", err)
+		return
+	}
+	rand.Seed(0)
+	var pass1 bool
+	pass1, err = filter.Test(msg)
+	if err != nil {
+		t.Error("Filter test failed", err)
+		return
+	}
+	if !pass1 {
+		t.Error("should pass")
+		return
+	}
+	err = json.Unmarshal([]byte(`{"template":"{{ randomInt 0 1 }}","value":"0"}`), &filter)
+	if err != nil {
+		t.Error("Failed to parse filter", err)
+		return
+	}
+	rand.Seed(1)
+	var pass2 bool
+	pass2, err = filter.Test(msg)
+	if err != nil {
+		t.Error("Filter test failed", err)
+		return
+	}
+	if pass2 {
+		t.Error("should not pass")
+		return
+	}
+}
+
+func TestRandom(t *testing.T) {
+	var filter = Filter{}
+	err := json.Unmarshal([]byte(`{"template":"{{ randomInt 0 1 }}","value":"0"}`), &filter)
+	if err != nil {
+		t.Error("Failed to parse filter", err)
+		return
+	}
+	var msg interface{}
+	msg, err = decodeJSONMessage([]byte(`{}`))
+	if err != nil {
+		t.Error("Failed to parse message", err)
+		return
+	}
+	rand.Seed(0)
+	var pass bool
+	pass, err = filter.Test(msg)
+	if err != nil {
+		t.Error("Filter test failed", err)
+		return
+	}
+	t.Logf("%t", pass)
+}
+
+func TestRandomToJSON(t *testing.T) {
+	var filter = Filter{}
+	err := json.Unmarshal([]byte(`{"template":"{{ randomInt 0 1 }}","value":"0"}`), &filter)
+	if err != nil {
+		t.Error("Failed to parse filter", err)
+		return
+	}
+	b, err := json.Marshal(filter)
+	if err != nil {
+		t.Error("Error marshaling to json", err)
+		return
+	}
+	if string(b) != `{"template":"{{randomInt 0 1}}","path":"","value":"0","operator":"","requeue":false,"or":null,"and":null}` {
+		t.Fail()
 	}
 }
