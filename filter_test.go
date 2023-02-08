@@ -748,7 +748,36 @@ func TestRandom(t *testing.T) {
 		t.Error("Filter test failed", err)
 		return
 	}
-	t.Logf("%t", pass)
+	if !pass {
+		t.Fail()
+	}
+}
+
+// TODO Should support string to number comparisons?
+func TestRandomInt(t *testing.T) {
+	t.Skip()
+	var filter = Filter{}
+	err := json.Unmarshal([]byte(`{"template":"{{ randomInt 0 1 }}","value":0}`), &filter)
+	if err != nil {
+		t.Error("Failed to parse filter", err)
+		return
+	}
+	var msg interface{}
+	msg, err = decodeJSONMessage([]byte(`{}`))
+	if err != nil {
+		t.Error("Failed to parse message", err)
+		return
+	}
+	rand.Seed(0)
+	var pass bool
+	pass, err = filter.Test(msg)
+	if err != nil {
+		t.Error("Filter test failed", err)
+		return
+	}
+	if !pass {
+		t.Fail()
+	}
 }
 
 func TestRandomToJSON(t *testing.T) {
