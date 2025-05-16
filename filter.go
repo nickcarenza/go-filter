@@ -4,12 +4,15 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"os"
 	"reflect"
 	"regexp"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/nickcarenza/go-template"
+	"github.com/robertkrimen/otto"
 	"github.com/the-control-group/go-jsonpath"
 	"github.com/the-control-group/go-timeutils"
 )
@@ -23,6 +26,13 @@ type Filter struct {
 	Requeue  bool               `json:"requeue"`
 	Or       *Filter            `json:"or"`
 	And      *Filter            `json:"and"`
+	Script   *ScriptFilter      `json:"script"`
+}
+
+type ScriptFilter struct {
+	Interpreter string `json:"interpreter"`
+	Script      string `json:"script"`
+	ScriptFile  string `json:"scriptFile"`
 }
 
 // Test evaluates if the filter or the Or clause passes
@@ -50,6 +60,41 @@ func Test(f *Filter, msg interface{}) (bool, error) {
 	var val interface{}
 	var err error
 	var fVal interface{}
+	if f.Script != nil {
+		switch strings.ToLower(f.Script.Interpreter) {
+		case "javascript", "js", "es5":
+			vm := otto.New()
+			vm.Set("input", msg)
+			var res otto.Value
+			if f.Script.ScriptFile != "" {
+				dat, err := os.ReadFile(f.Script.ScriptFile)
+				if err != nil {
+					return false, err
+				}
+				res, err = vm.Run(dat)
+				if err != nil {
+					return false, err
+				}
+				b, err := res.ToBoolean()
+				if err != nil {
+					return false, err
+				}
+				return b, nil
+			} else {
+				res, err = vm.Run(f.Script.Script)
+				if err != nil {
+					return false, err
+				}
+				b, err := res.ToBoolean()
+				if err != nil {
+					return false, err
+				}
+				return b, nil
+			}
+		default:
+			return false, fmt.Errorf("unsupported interpreter %s", f.Script.Interpreter)
+		}
+	}
 	if f.Template != nil {
 		var b bytes.Buffer
 		err = f.Template.Execute(&b, msg)
@@ -86,7 +131,7 @@ func Test(f *Filter, msg interface{}) (bool, error) {
 	switch f.Operator {
 	case "!=", "<>", "ne", "doesn't equal", "not equal to":
 		return fVal != val, nil
-	case "==", "eq", "equal", "equals":
+	case "=", "==", "eq", "equal", "equals":
 		return fVal == val, nil
 	case "in", "not in":
 		rt := reflect.TypeOf(fVal)

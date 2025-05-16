@@ -110,6 +110,134 @@ func TestFilterIn(t *testing.T) {
 	}
 }
 
+func TestFilterScriptJavascript(t *testing.T) {
+	var filter = Filter{}
+	dec := json.NewDecoder(bytes.NewBuffer([]byte(`{"script":{"interpreter":"javascript","script":"Array.isArray(input.network) && input.network.filter(function (line) { if (line.left === \"BILLED_TO\" && line.right === \"BILLED_TO\" && line.link === \"CreditCard\" && line.overusers > 0) { return true; } }).length > 0"}}`)))
+	// dec := json.NewDecoder(bytes.NewBuffer([]byte(`{"script":{"interpreter":"javascript","script":"input.network?.find(function (line) { if (line.left === \"BILLED_TO\" && line.right === \"BILLED_TO\" && line.link === \"CreditCard\" && line.overusers > 0) { return true; } })"}}`)))
+	// dec := json.NewDecoder(bytes.NewBuffer([]byte(`{"script":{"interpreter":"javascript","script":"true"}}`)))
+	// dec := json.NewDecoder(bytes.NewBuffer([]byte(`{"script":{"interpreter":"javascript","script":"false;true"}}`)))
+	// dec := json.NewDecoder(bytes.NewBuffer([]byte(`{"script":{"interpreter":"javascript","script":"5"}}`)))
+	// dec := json.NewDecoder(bytes.NewBuffer([]byte(`{"script":{"interpreter":"javascript","script":"Array.isArray(input.network)"}}`)))
+	// dec := json.NewDecoder(bytes.NewBuffer([]byte(`{"script":{"interpreter":"javascript","script":"typeof input.network.filter === \"function\""}}`)))
+	dec.UseNumber()
+	err := dec.Decode(&filter)
+	if err != nil {
+		t.Error("Failed to parse filter", err)
+		return
+	}
+	var msg1 interface{}
+	msg1, err = decodeJSONMessage([]byte(strings.Join([]string{`{"network":[{"left":"BILLED_TO","link":"CreditCard","overusers":1,"right":"BILLED_TO","total":2}]}`}, "")))
+
+	if err != nil {
+		t.Error("Failed to parse message 1", err)
+		return
+	}
+	var pass bool
+	pass, err = filter.Test(msg1)
+	if err != nil {
+		t.Error("Filter test failed", err)
+		return
+	}
+	if !pass {
+		t.Error("Message 1 should pass")
+		return
+	}
+	var msg2 interface{}
+	msg2, err = decodeJSONMessage([]byte(strings.Join([]string{`{"network":[{"left":"BILLED_TO","link":"CreditCard","overusers":0,"right":"BILLED_TO","total":2}]}`}, "")))
+	if err != nil {
+		t.Error("Failed to parse message 1", err)
+		return
+	}
+	pass, err = filter.Test(msg2)
+	if err != nil {
+		t.Error("Filter test failed", err)
+		return
+	}
+	if pass {
+		t.Error("Message 2 should not pass")
+		return
+	}
+	var msg3 interface{}
+	msg3, err = decodeJSONMessage([]byte(strings.Join([]string{`{}`}, "")))
+	if err != nil {
+		t.Error("Failed to parse message 3", err)
+		return
+	}
+	pass, err = filter.Test(msg3)
+	if err != nil {
+		t.Error("Filter test failed", err)
+		return
+	}
+	if pass {
+		t.Error("Message 3 should not pass")
+		return
+	}
+}
+
+func TestFilterScriptJavascriptFile(t *testing.T) {
+	var filter = Filter{}
+	dec := json.NewDecoder(bytes.NewBuffer([]byte(`{"script":{"interpreter":"javascript","scriptFile":"./script.js"}}`)))
+	// dec := json.NewDecoder(bytes.NewBuffer([]byte(`{"script":{"interpreter":"javascript","script":"input.network?.find(function (line) { if (line.left === \"BILLED_TO\" && line.right === \"BILLED_TO\" && line.link === \"CreditCard\" && line.overusers > 0) { return true; } })"}}`)))
+	// dec := json.NewDecoder(bytes.NewBuffer([]byte(`{"script":{"interpreter":"javascript","script":"true"}}`)))
+	// dec := json.NewDecoder(bytes.NewBuffer([]byte(`{"script":{"interpreter":"javascript","script":"false;true"}}`)))
+	// dec := json.NewDecoder(bytes.NewBuffer([]byte(`{"script":{"interpreter":"javascript","script":"5"}}`)))
+	// dec := json.NewDecoder(bytes.NewBuffer([]byte(`{"script":{"interpreter":"javascript","script":"Array.isArray(input.network)"}}`)))
+	// dec := json.NewDecoder(bytes.NewBuffer([]byte(`{"script":{"interpreter":"javascript","script":"typeof input.network.filter === \"function\""}}`)))
+	dec.UseNumber()
+	err := dec.Decode(&filter)
+	if err != nil {
+		t.Error("Failed to parse filter", err)
+		return
+	}
+	var msg1 interface{}
+	msg1, err = decodeJSONMessage([]byte(strings.Join([]string{`{"network":[{"left":"BILLED_TO","link":"CreditCard","overusers":1,"right":"BILLED_TO","total":2}]}`}, "")))
+
+	if err != nil {
+		t.Error("Failed to parse message 1", err)
+		return
+	}
+	var pass bool
+	pass, err = filter.Test(msg1)
+	if err != nil {
+		t.Error("Filter test failed", err)
+		return
+	}
+	if !pass {
+		t.Error("Message 1 should pass")
+		return
+	}
+	var msg2 interface{}
+	msg2, err = decodeJSONMessage([]byte(strings.Join([]string{`{"network":[{"left":"BILLED_TO","link":"CreditCard","overusers":0,"right":"BILLED_TO","total":2}]}`}, "")))
+	if err != nil {
+		t.Error("Failed to parse message 1", err)
+		return
+	}
+	pass, err = filter.Test(msg2)
+	if err != nil {
+		t.Error("Filter test failed", err)
+		return
+	}
+	if pass {
+		t.Error("Message 2 should not pass")
+		return
+	}
+	var msg3 interface{}
+	msg3, err = decodeJSONMessage([]byte(strings.Join([]string{`{}`}, "")))
+	if err != nil {
+		t.Error("Failed to parse message 3", err)
+		return
+	}
+	pass, err = filter.Test(msg3)
+	if err != nil {
+		t.Error("Filter test failed", err)
+		return
+	}
+	if pass {
+		t.Error("Message 3 should not pass")
+		return
+	}
+}
+
 func TestFilterNotIn(t *testing.T) {
 	var filter = Filter{}
 	dec := json.NewDecoder(bytes.NewBuffer([]byte(`{"path":"$.value","operator":"not in","value":[1,2,3]}`)))
@@ -792,7 +920,8 @@ func TestRandomToJSON(t *testing.T) {
 		t.Error("Error marshaling to json", err)
 		return
 	}
-	if string(b) != `{"template":"{{randomInt 0 1}}","path":"","value":"0","operator":"","requeue":false,"or":null,"and":null}` {
+	if string(b) != `{"template":"{{randomInt 0 1}}","path":"","value":"0","operator":"","requeue":false,"or":null,"and":null,"script":null}` {
+		t.Log(string(b))
 		t.Fail()
 	}
 }
