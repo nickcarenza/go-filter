@@ -174,6 +174,34 @@ func TestFilterScriptJavascript(t *testing.T) {
 	}
 }
 
+func TestFilterScriptJavascriptWithMetadata(t *testing.T) {
+	var filter = Filter{}
+	dec := json.NewDecoder(bytes.NewBuffer([]byte(`{"script":{"interpreter":"javascript","script":"metadata.key === \"value\"","metadata":{"key":"value"}}}}`)))
+	dec.UseNumber()
+	err := dec.Decode(&filter)
+	if err != nil {
+		t.Error("Failed to parse filter", err)
+		return
+	}
+	var msg interface{}
+	msg, err = decodeJSONMessage([]byte(strings.Join([]string{`{"network":[{"left":"BILLED_TO","link":"CreditCard","overusers":1,"right":"BILLED_TO","total":2}]}`}, "")))
+
+	if err != nil {
+		t.Error("Failed to parse message 1", err)
+		return
+	}
+	var pass bool
+	pass, err = filter.Test(msg)
+	if err != nil {
+		t.Error("Filter test failed", err)
+		return
+	}
+	if !pass {
+		t.Error("Message should pass")
+		return
+	}
+}
+
 func TestFilterScriptJavascriptFile(t *testing.T) {
 	var filter = Filter{}
 	dec := json.NewDecoder(bytes.NewBuffer([]byte(`{"script":{"interpreter":"javascript","scriptFile":"./script.js"}}`)))

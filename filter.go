@@ -30,9 +30,10 @@ type Filter struct {
 }
 
 type ScriptFilter struct {
-	Interpreter string `json:"interpreter"`
-	Script      string `json:"script"`
-	ScriptFile  string `json:"scriptFile"`
+	Interpreter string                 `json:"interpreter"`
+	Script      string                 `json:"script"`
+	ScriptFile  string                 `json:"scriptFile"`
+	Metadata    map[string]interface{} `json:"metadata"`
 }
 
 // Test evaluates if the filter or the Or clause passes
@@ -65,6 +66,7 @@ func Test(f *Filter, msg interface{}) (bool, error) {
 		case "javascript", "js", "es5":
 			vm := otto.New()
 			vm.Set("input", msg)
+			vm.Set("metadata", f.Script.Metadata)
 			var res otto.Value
 			if f.Script.ScriptFile != "" {
 				dat, err := os.ReadFile(f.Script.ScriptFile)
